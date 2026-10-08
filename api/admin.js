@@ -89,6 +89,7 @@ function projectDraw(draw, questionById) {
   return {
     record_key: recordKey(draw),
     registro_id: draw.registro_id || null,
+    turno: draw.turno || null,
     tipo: draw.tipo || ((draw.alunos || []).length === 1 ? 'individual' : 'dupla'),
     alunos: draw.alunos || [],
     questao: snapshot,
