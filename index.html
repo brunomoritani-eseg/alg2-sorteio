@@ -11,51 +11,31 @@
     <section class="hero">
       <span class="badge">AMBIENTE DE TESTES</span>
       <h1>Algoritmos 2<br>Sorteio do Projeto</h1>
-      <p>
-        Cada participante ou dupla receberá uma única questão. O enunciado não informa qual
-        paradigma algorítmico deve ser utilizado: identificar e justificar a estratégia faz parte do projeto.
-      </p>
+      <p>Cada participante ou dupla receberá uma única questão. Identificar e justificar a estratégia faz parte do projeto.</p>
     </section>
 
     <section class="card">
       <h2>Dados dos participantes</h2>
-      <p class="lead">
-        O aluno 1 é obrigatório. Se o trabalho for individual, deixe os campos do aluno 2 vazios.
-      </p>
+      <p class="lead">O aluno 1 é obrigatório. Se o trabalho for individual, deixe os campos do aluno 2 vazios.</p>
 
       <form id="draw-form">
         <div class="student-block">
           <h3>Aluno 1 <span class="required">obrigatório</span></h3>
           <div class="grid">
-            <label>
-              <span>Nome</span>
-              <input id="nome1" autocomplete="name" maxlength="100" required placeholder="Nome completo">
-            </label>
-            <label>
-              <span>RA</span>
-              <input id="ra1" maxlength="30" required placeholder="Ex.: 123456">
-            </label>
+            <label><span>Nome</span><input id="nome1" maxlength="100" required placeholder="Nome completo"></label>
+            <label><span>RA</span><input id="ra1" maxlength="30" required placeholder="Ex.: 123456"></label>
           </div>
         </div>
 
         <div class="student-block optional">
           <h3>Aluno 2 <span class="optional-tag">opcional</span></h3>
           <div class="grid">
-            <label>
-              <span>Nome</span>
-              <input id="nome2" maxlength="100" placeholder="Deixe vazio se for individual">
-            </label>
-            <label>
-              <span>RA</span>
-              <input id="ra2" maxlength="30" placeholder="Deixe vazio se for individual">
-            </label>
+            <label><span>Nome</span><input id="nome2" maxlength="100" placeholder="Deixe vazio se for individual"></label>
+            <label><span>RA</span><input id="ra2" maxlength="30" placeholder="Deixe vazio se for individual"></label>
           </div>
         </div>
 
-        <div class="warning">
-          <strong>Sorteio único por participante.</strong>
-          Um RA que já participou de um sorteio não poderá ser usado novamente em outra dupla.
-        </div>
+        <div class="warning"><strong>Sorteio único por participante.</strong> Um RA que já participou de um sorteio não poderá ser usado novamente em outra dupla.</div>
 
         <button class="button" id="submit-button" type="submit">Sortear minha questão</button>
         <p id="form-error" class="error" hidden></p>
@@ -67,9 +47,7 @@
       <h2 id="result-title"></h2>
       <p id="result-participants" class="result-participants"></p>
       <div id="result-text" class="question-text"></div>
-      <p id="repeat-note" class="small" hidden>
-        Este sorteio já havia sido realizado anteriormente. A questão original foi mantida.
-      </p>
+      <p id="repeat-note" class="small" hidden>Este sorteio já havia sido realizado anteriormente. A questão original foi mantida.</p>
     </section>
 
     <section class="card secondary">
@@ -78,8 +56,8 @@
         <li>Informe o aluno 1 e, se houver dupla, também o aluno 2.</li>
         <li>Clique em <strong>Sortear minha questão</strong>.</li>
         <li>O sistema verifica se algum RA já participou de outro sorteio.</li>
-        <li>Uma questão é escolhida de forma balanceada entre os paradigmas disponíveis.</li>
-        <li>O resultado é registrado no repositório privado do professor e mostrado nesta página.</li>
+        <li>A questão é escolhida de forma balanceada e registrada no ambiente privado do professor.</li>
+        <li>O resultado aparece nesta própria página.</li>
       </ol>
     </section>
   </main>
@@ -94,18 +72,8 @@
     const resultText = document.getElementById('result-text');
     const repeatNote = document.getElementById('repeat-note');
 
-    function clean(value) {
-      return value.trim().replace(/\s+/g, ' ');
-    }
-
-    function cleanRa(value) {
-      return value.trim().replace(/[^0-9A-Za-z]/g, '').toUpperCase();
-    }
-
-    function setLoading(loading) {
-      button.disabled = loading;
-      button.textContent = loading ? 'Sorteando...' : 'Sortear minha questão';
-    }
+    const clean = value => value.trim().replace(/\s+/g, ' ');
+    const cleanRa = value => value.trim().replace(/[^0-9A-Za-z]/g, '').toUpperCase();
 
     function showError(message) {
       error.textContent = message;
@@ -123,22 +91,12 @@
       const nome2 = clean(document.getElementById('nome2').value);
       const ra2 = cleanRa(document.getElementById('ra2').value);
 
-      if (!nome1 || !ra1) {
-        showError('Preencha nome e RA do aluno 1.');
-        return;
-      }
+      if (!nome1 || !ra1) return showError('Preencha nome e RA do aluno 1.');
+      if ((nome2 && !ra2) || (!nome2 && ra2)) return showError('Para usar o aluno 2, preencha nome e RA. Se for individual, deixe os dois campos vazios.');
+      if (ra2 && ra1 === ra2) return showError('Os dois integrantes precisam ter RAs diferentes.');
 
-      if ((nome2 && !ra2) || (!nome2 && ra2)) {
-        showError('Para usar o aluno 2, preencha nome e RA. Se o trabalho for individual, deixe os dois campos vazios.');
-        return;
-      }
-
-      if (ra2 && ra1 === ra2) {
-        showError('Os dois integrantes precisam ter RAs diferentes.');
-        return;
-      }
-
-      setLoading(true);
+      button.disabled = true;
+      button.textContent = 'Sorteando...';
 
       try {
         const response = await fetch('/api/sortear', {
@@ -146,20 +104,11 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ nome1, ra1, nome2, ra2 })
         });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Não foi possível realizar o sorteio.');
 
-        let data;
-        try {
-          data = await response.json();
-        } catch {
-          throw new Error('O serviço de sorteio ainda não está disponível neste endereço.');
-        }
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Não foi possível realizar o sorteio.');
-        }
-
-        resultTitle.textContent = `${data.questao.id} — ${data.questao.titulo}`;
-        resultParticipants.textContent = data.participantes.map(p => `${p.nome} (${p.ra})`).join(' / ');
+        resultTitle.textContent = data.questao.id + ' — ' + data.questao.titulo;
+        resultParticipants.textContent = data.participantes.map(p => p.nome + ' (' + p.ra + ')').join(' / ');
         resultText.textContent = data.questao.enunciado;
         repeatNote.hidden = !data.ja_existia;
         resultCard.hidden = false;
@@ -167,7 +116,8 @@
       } catch (err) {
         showError(err.message || 'Erro inesperado ao realizar o sorteio.');
       } finally {
-        setLoading(false);
+        button.disabled = false;
+        button.textContent = 'Sortear minha questão';
       }
     });
   </script>
