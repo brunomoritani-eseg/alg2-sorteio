@@ -1,7 +1,6 @@
 name: Sorteio de teste
 description: Solicite o sorteio da questão da sua dupla no ambiente de testes.
 title: "[SORTEIO-TESTE] "
-labels: ["sorteio-teste"]
 body:
   - type: markdown
     attributes:
