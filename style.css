@@ -40,7 +40,7 @@ h1 { font-size: clamp(42px, 8vw, 72px); line-height: .98; margin: 18px 0; letter
 .optional-tag { color: #667085; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 label span { display: block; font-weight: 700; margin-bottom: 8px; }
-input {
+input, select {
   width: 100%;
   padding: 13px 14px;
   border: 1px solid #ccd3df;
@@ -48,7 +48,7 @@ input {
   font: inherit;
   background: white;
 }
-input:focus { outline: 3px solid rgba(23,32,51,.10); border-color: #172033; }
+input:focus, select:focus { outline: 3px solid rgba(23,32,51,.10); border-color: #172033; }
 .warning {
   margin: 24px 0;
   padding: 16px 18px;
