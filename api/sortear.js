@@ -109,10 +109,15 @@ module.exports = async function handler(req, res) {
   }
 
   const body = req.body || {};
+  const turno = String(body.turno || '').trim().toUpperCase();
   const nome1 = normalizeName(body.nome1);
   const ra1 = normalizeRa(body.ra1);
   const nome2 = normalizeName(body.nome2);
   const ra2 = normalizeRa(body.ra2);
+
+  if (!['DIURNO', 'NOTURNO'].includes(turno)) {
+    return res.status(400).json({ error: 'Selecione um turno válido de Algoritmos 2.' });
+  }
 
   if (!nome1 || !ra1) {
     return res.status(400).json({ error: 'Nome e RA do aluno 1 são obrigatórios.' });
@@ -168,6 +173,7 @@ module.exports = async function handler(req, res) {
           const q = questionById[sameDraw.questao];
           return res.status(200).json({
             ja_existia: true,
+            turno: sameDraw.turno || turno,
             participantes,
             questao: publicQuestion(q)
           });
@@ -224,6 +230,7 @@ module.exports = async function handler(req, res) {
 
       history.sorteios.push({
         registro_id: randomUUID(),
+        turno,
         tipo: participantes.length === 1 ? 'individual' : 'dupla',
         dupla_chave: requestedRas.slice().sort().join('--'),
         alunos: participantes,
@@ -247,6 +254,7 @@ module.exports = async function handler(req, res) {
 
       return res.status(200).json({
         ja_existia: false,
+        turno,
         participantes,
         questao: publicQuestion(question)
       });
