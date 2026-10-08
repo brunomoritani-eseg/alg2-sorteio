@@ -2,7 +2,7 @@ const { randomInt } = require('crypto');
 
 const ADMIN_REPO = process.env.ADMIN_REPO || 'brunomoritani-eseg/alg2-sorteio-admin';
 const ADMIN_BRANCH = process.env.ADMIN_BRANCH || 'main';
-const TOKEN = process.env.GITHUB_ADMIN_TOKEN;
+const TOKEN = process.env.GITHUB_ADMIN_TOKEN || process.env.ADMIN_REPO_TOKEN;
 const API_ROOT = `https://api.github.com/repos/${ADMIN_REPO}/contents`;
 
 const PATHS = {
