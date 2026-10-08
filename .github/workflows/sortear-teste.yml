@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   sortear:
-    if: contains(github.event.issue.labels.*.name, 'sorteio-teste')
+    if: startsWith(github.event.issue.title, '[SORTEIO-TESTE]')
     runs-on: ubuntu-latest
 
     steps:
