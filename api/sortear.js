@@ -192,6 +192,7 @@ module.exports = async function handler(req, res) {
       }
 
       for (const draw of history.sorteios) {
+        if (draw.turno && draw.turno !== turno) continue;
         counts[draw.paradigma] = (counts[draw.paradigma] || 0) + 1;
         questionUses[draw.questao] = (questionUses[draw.questao] || 0) + 1;
       }
