@@ -12,64 +12,87 @@
       <span class="badge">AMBIENTE DE TESTES</span>
       <h1>Algoritmos 2<br>Sorteio do Projeto</h1>
       <p>
-        Cada dupla receberá uma única questão. O enunciado não informa qual paradigma
-        algorítmico deve ser utilizado: identificar e justificar a estratégia faz parte do projeto.
+        Cada participante ou dupla receberá uma única questão. O enunciado não informa qual
+        paradigma algorítmico deve ser utilizado: identificar e justificar a estratégia faz parte do projeto.
       </p>
     </section>
 
     <section class="card">
-      <h2>Dados da dupla</h2>
-      <p>Preencha os dados abaixo. Ao continuar, o GitHub abrirá uma nova issue já preenchida. Basta revisar e clicar em <strong>Submit new issue</strong>.</p>
+      <h2>Dados dos participantes</h2>
+      <p class="lead">
+        O aluno 1 é obrigatório. Se o trabalho for individual, deixe os campos do aluno 2 vazios.
+      </p>
 
       <form id="draw-form">
-        <div class="grid">
-          <label>
-            <span>Nome do aluno 1</span>
-            <input id="nome1" required placeholder="Nome completo">
-          </label>
+        <div class="student-block">
+          <h3>Aluno 1 <span class="required">obrigatório</span></h3>
+          <div class="grid">
+            <label>
+              <span>Nome</span>
+              <input id="nome1" autocomplete="name" maxlength="100" required placeholder="Nome completo">
+            </label>
+            <label>
+              <span>RA</span>
+              <input id="ra1" maxlength="30" required placeholder="Ex.: 123456">
+            </label>
+          </div>
+        </div>
 
-          <label>
-            <span>RA do aluno 1</span>
-            <input id="ra1" required placeholder="Ex.: 123456">
-          </label>
-
-          <label>
-            <span>Nome do aluno 2</span>
-            <input id="nome2" required placeholder="Nome completo">
-          </label>
-
-          <label>
-            <span>RA do aluno 2</span>
-            <input id="ra2" required placeholder="Ex.: 654321">
-          </label>
+        <div class="student-block optional">
+          <h3>Aluno 2 <span class="optional-tag">opcional</span></h3>
+          <div class="grid">
+            <label>
+              <span>Nome</span>
+              <input id="nome2" maxlength="100" placeholder="Deixe vazio se for individual">
+            </label>
+            <label>
+              <span>RA</span>
+              <input id="ra2" maxlength="30" placeholder="Deixe vazio se for individual">
+            </label>
+          </div>
         </div>
 
         <div class="warning">
-          <strong>Sorteio único por dupla.</strong>
-          Depois que uma dupla recebe uma questão, novas solicitações com os mesmos RAs
-          não geram outro sorteio.
+          <strong>Sorteio único por participante.</strong>
+          Um RA que já participou de um sorteio não poderá ser usado novamente em outra dupla.
         </div>
 
-        <button class="button" type="submit">Solicitar sorteio de teste</button>
+        <button class="button" id="submit-button" type="submit">Sortear minha questão</button>
         <p id="form-error" class="error" hidden></p>
       </form>
+    </section>
+
+    <section id="result-card" class="card result-card" hidden>
+      <span class="success-badge">SORTEIO CONCLUÍDO</span>
+      <h2 id="result-title"></h2>
+      <p id="result-participants" class="result-participants"></p>
+      <div id="result-text" class="question-text"></div>
+      <p id="repeat-note" class="small" hidden>
+        Este sorteio já havia sido realizado anteriormente. A questão original foi mantida.
+      </p>
     </section>
 
     <section class="card secondary">
       <h2>Como funciona</h2>
       <ol>
-        <li>Você informa os integrantes da dupla nesta página.</li>
-        <li>O site abre uma nova issue no GitHub com os dados já preenchidos.</li>
-        <li>Você clica em <strong>Submit new issue</strong>.</li>
-        <li>O GitHub Action processa o sorteio e responde na própria issue.</li>
-        <li>A issue é fechada automaticamente após o resultado.</li>
+        <li>Informe o aluno 1 e, se houver dupla, também o aluno 2.</li>
+        <li>Clique em <strong>Sortear minha questão</strong>.</li>
+        <li>O sistema verifica se algum RA já participou de outro sorteio.</li>
+        <li>Uma questão é escolhida de forma balanceada entre os paradigmas disponíveis.</li>
+        <li>O resultado é registrado no repositório privado do professor e mostrado nesta página.</li>
       </ol>
     </section>
   </main>
 
   <script>
     const form = document.getElementById('draw-form');
+    const button = document.getElementById('submit-button');
     const error = document.getElementById('form-error');
+    const resultCard = document.getElementById('result-card');
+    const resultTitle = document.getElementById('result-title');
+    const resultParticipants = document.getElementById('result-participants');
+    const resultText = document.getElementById('result-text');
+    const repeatNote = document.getElementById('repeat-note');
 
     function clean(value) {
       return value.trim().replace(/\s+/g, ' ');
@@ -79,50 +102,73 @@
       return value.trim().replace(/[^0-9A-Za-z]/g, '').toUpperCase();
     }
 
-    form.addEventListener('submit', (event) => {
+    function setLoading(loading) {
+      button.disabled = loading;
+      button.textContent = loading ? 'Sorteando...' : 'Sortear minha questão';
+    }
+
+    function showError(message) {
+      error.textContent = message;
+      error.hidden = false;
+      resultCard.hidden = true;
+    }
+
+    form.addEventListener('submit', async (event) => {
       event.preventDefault();
       error.hidden = true;
+      resultCard.hidden = true;
 
       const nome1 = clean(document.getElementById('nome1').value);
       const ra1 = cleanRa(document.getElementById('ra1').value);
       const nome2 = clean(document.getElementById('nome2').value);
       const ra2 = cleanRa(document.getElementById('ra2').value);
 
-      if (!nome1 || !ra1 || !nome2 || !ra2) {
-        error.textContent = 'Preencha os quatro campos.';
-        error.hidden = false;
+      if (!nome1 || !ra1) {
+        showError('Preencha nome e RA do aluno 1.');
         return;
       }
 
-      if (ra1 === ra2) {
-        error.textContent = 'Os dois integrantes precisam ter RAs diferentes.';
-        error.hidden = false;
+      if ((nome2 && !ra2) || (!nome2 && ra2)) {
+        showError('Para usar o aluno 2, preencha nome e RA. Se o trabalho for individual, deixe os dois campos vazios.');
         return;
       }
 
-      const title = `[SORTEIO-TESTE] ${ra1}-${ra2}`;
-      const body = [
-        '### Nome do aluno 1',
-        nome1,
-        '',
-        '### RA do aluno 1',
-        ra1,
-        '',
-        '### Nome do aluno 2',
-        nome2,
-        '',
-        '### RA do aluno 2',
-        ra2,
-        '',
-        '### Confirmação',
-        '- [x] Confirmo que esta é a dupla correta e entendo que não poderei sortear novamente.'
-      ].join('\n');
+      if (ra2 && ra1 === ra2) {
+        showError('Os dois integrantes precisam ter RAs diferentes.');
+        return;
+      }
 
-      const url = new URL('https://github.com/brunomoritani-eseg/alg2-sorteio/issues/new');
-      url.searchParams.set('title', title);
-      url.searchParams.set('body', body);
+      setLoading(true);
 
-      window.location.href = url.toString();
+      try {
+        const response = await fetch('/api/sortear', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome1, ra1, nome2, ra2 })
+        });
+
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error('O serviço de sorteio ainda não está disponível neste endereço.');
+        }
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Não foi possível realizar o sorteio.');
+        }
+
+        resultTitle.textContent = `${data.questao.id} — ${data.questao.titulo}`;
+        resultParticipants.textContent = data.participantes.map(p => `${p.nome} (${p.ra})`).join(' / ');
+        resultText.textContent = data.questao.enunciado;
+        repeatNote.hidden = !data.ja_existia;
+        resultCard.hidden = false;
+        resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        showError(err.message || 'Erro inesperado ao realizar o sorteio.');
+      } finally {
+        setLoading(false);
+      }
     });
   </script>
 </body>
