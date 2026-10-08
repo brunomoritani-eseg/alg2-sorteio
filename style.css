@@ -28,11 +28,7 @@ h1 { font-size: clamp(42px, 8vw, 72px); line-height: .98; margin: 18px 0; letter
   box-shadow: 0 10px 30px rgba(31,41,55,.06);
 }
 .card h2 { margin-top: 0; }
-.student-block {
-  border-top: 1px solid #edf0f5;
-  padding-top: 22px;
-  margin-top: 22px;
-}
+.student-block { border-top: 1px solid #edf0f5; padding-top: 22px; margin-top: 22px; }
 .student-block h3 { margin: 0 0 14px; }
 .required, .optional-tag {
   font-size: 11px;
