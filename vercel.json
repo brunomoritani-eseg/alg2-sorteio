@@ -3,6 +3,10 @@
     "api/sortear.js": {
       "memory": 128,
       "maxDuration": 10
+    },
+    "api/dados.js": {
+      "memory": 128,
+      "maxDuration": 20
     }
   }
 }

@@ -7,9 +7,9 @@ const ADMIN_PASSWORD = process.env.ADMIN_PANEL_PASSWORD;
 const API_ROOT = 'https://api.github.com/repos/' + ADMIN_REPO + '/contents';
 
 const PATHS = {
-  questions: 'banco/questoes-teste.json',
-  key: 'professor/gabarito-teste.json',
-  history: 'sorteios/sorteios-teste.json'
+  questions: 'banco/questoes.json',
+  key: 'professor/gabarito.json',
+  history: 'sorteios/sorteios.json'
 };
 
 function ghHeaders() {

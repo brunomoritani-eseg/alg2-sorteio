@@ -18,9 +18,9 @@ Se o aluno 2 estiver vazio, o sorteio é registrado como **individual**. Se houv
 
 Um RA só pode participar de um sorteio. Isso impede que alguém sorteie individualmente e depois tente realizar novo sorteio em outra dupla.
 
-## Ambiente atual
+## Banco oficial
 
-O sistema está em **modo de testes** com cinco questões, uma por paradigma. Cada questão pode ser usada uma vez.
+O sistema utiliza 20 questões, distribuídas igualmente entre cinco paradigmas. Cada questão pode ser usada uma vez por turno. Os arquivos de dados permanecem no repositório privado e são entregues somente ao participante ou dupla que recebeu a questão.
 
 ## Variáveis de ambiente necessárias na Vercel
 
@@ -35,7 +35,8 @@ O sistema está em **modo de testes** com cinco questões, uma por paradigma. Ca
 3. Faça outro teste preenchendo aluno 1 e aluno 2.
 4. Repita com um RA já utilizado: o sistema deve bloquear novo sorteio.
 5. Repita exatamente o mesmo participante ou dupla: o sistema devolve a questão original.
-6. Confira o histórico em `sorteios/sorteios-teste.json` no repositório privado.
+6. Confira o histórico em `sorteios/sorteios.json` no repositório privado.
+7. Confirme que os quatro arquivos `.txt` da questão podem ser baixados.
 
 O fluxo antigo baseado em GitHub Issues foi removido.
 

@@ -9,7 +9,7 @@
 <body>
   <main class="container">
     <section class="hero">
-      <span class="badge">AMBIENTE DE TESTES</span>
+      <span class="badge">PROJETO DE ALGORITMOS 2</span>
       <h1>Algoritmos 2<br>Sorteio do Projeto</h1>
       <p>Cada participante ou dupla receberá uma única questão. Identificar e justificar a estratégia faz parte do projeto.</p>
     </section>
@@ -60,6 +60,11 @@
       <p id="result-turno" class="result-participants"></p>
       <p id="result-participants" class="result-participants"></p>
       <div id="result-text" class="question-text"></div>
+      <div id="result-files" class="result-files" hidden>
+        <h3>Arquivos da atividade</h3>
+        <p>Leia primeiro a descrição do formato. Todos os dados são arquivos de texto UTF-8 compatíveis com Java.</p>
+        <div id="file-list" class="file-list"></div>
+      </div>
       <p id="repeat-note" class="small" hidden>Este sorteio já havia sido realizado anteriormente. A questão original foi mantida.</p>
     </section>
 
@@ -71,7 +76,7 @@
         <li>Clique em <strong>Sortear minha questão</strong>.</li>
         <li>O sistema verifica se algum RA já participou de outro sorteio.</li>
         <li>A questão é escolhida de forma balanceada e registrada no ambiente privado do professor.</li>
-        <li>O resultado aparece nesta própria página.</li>
+        <li>O resultado e os arquivos de dados da questão aparecem nesta própria página.</li>
       </ol>
     </section>
   </main>
@@ -85,6 +90,8 @@
     const resultTurno = document.getElementById('result-turno');
     const resultParticipants = document.getElementById('result-participants');
     const resultText = document.getElementById('result-text');
+    const resultFiles = document.getElementById('result-files');
+    const fileList = document.getElementById('file-list');
     const repeatNote = document.getElementById('repeat-note');
 
     const clean = value => value.trim().replace(/\s+/g, ' ');
@@ -128,6 +135,15 @@
         resultTurno.textContent = data.turno === 'NOTURNO' ? 'Algoritmos 2 — Noturno' : 'Algoritmos 2 — Diurno';
         resultParticipants.textContent = data.participantes.map(p => p.nome + ' (' + p.ra + ')').join(' / ');
         resultText.textContent = data.questao.enunciado;
+        fileList.replaceChildren();
+        for (const file of data.questao.arquivos || []) {
+          const link = document.createElement('a');
+          link.className = 'file-link';
+          link.href = file.url;
+          link.textContent = file.nome;
+          fileList.appendChild(link);
+        }
+        resultFiles.hidden = fileList.childElementCount === 0;
         repeatNote.hidden = !data.ja_existia;
         resultCard.hidden = false;
         resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });

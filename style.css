@@ -83,6 +83,27 @@ input:focus, select:focus { outline: 3px solid rgba(23,32,51,.10); border-color:
   padding: 18px;
   margin-top: 18px;
 }
+.result-files {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #c7d7fe;
+  border-radius: 12px;
+  background: #f5f8ff;
+}
+.result-files h3 { margin: 0 0 8px; }
+.result-files p { color: #475467; line-height: 1.5; }
+.file-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.file-link {
+  display: inline-block;
+  padding: 10px 13px;
+  border-radius: 9px;
+  color: #253ea7;
+  background: #fff;
+  border: 1px solid #a9bcf5;
+  font-weight: 800;
+  text-decoration: none;
+}
+.file-link:hover { background: #edf2ff; }
 ol { padding-left: 22px; line-height: 1.8; }
 @media (max-width: 650px) {
   .grid { grid-template-columns: 1fr; }

@@ -6,10 +6,10 @@ const TOKEN = process.env.GITHUB_ADMIN_TOKEN || process.env.ADMIN_REPO_TOKEN;
 const API_ROOT = `https://api.github.com/repos/${ADMIN_REPO}/contents`;
 
 const PATHS = {
-  questions: 'banco/questoes-teste.json',
-  key: 'professor/gabarito-teste.json',
-  config: 'configuracao/distribuicao-teste.json',
-  history: 'sorteios/sorteios-teste.json'
+  questions: 'banco/questoes.json',
+  key: 'professor/gabarito.json',
+  config: 'configuracao/distribuicao.json',
+  history: 'sorteios/sorteios.json'
 };
 
 function ghHeaders() {
@@ -87,11 +87,18 @@ function choose(array) {
   return array[randomInt(array.length)];
 }
 
-function publicQuestion(question) {
+function publicQuestion(question, recordId) {
   return {
     id: question.id,
     titulo: question.titulo,
-    enunciado: question.enunciado
+    enunciado: question.enunciado,
+    arquivos: recordId
+      ? (question.arquivos || []).map(file => ({
+          id: file.id,
+          nome: file.nome,
+          url: `/api/dados?token=${encodeURIComponent(recordId)}&arquivo=${encodeURIComponent(file.id)}`
+        }))
+      : []
   };
 }
 
@@ -175,7 +182,7 @@ module.exports = async function handler(req, res) {
             ja_existia: true,
             turno: sameDraw.turno || turno,
             participantes,
-            questao: publicQuestion(q)
+            questao: publicQuestion(q, sameDraw.registro_id)
           });
         }
 
@@ -218,7 +225,7 @@ module.exports = async function handler(req, res) {
 
       if (paradigms.length === 0) {
         return res.status(409).json({
-          error: 'O ambiente de testes está esgotado. Avise o professor para reinicializá-lo.'
+          error: 'O banco de questões disponível para esta turma está esgotado. Avise o professor.'
         });
       }
 
@@ -228,9 +235,10 @@ module.exports = async function handler(req, res) {
       const question = choose(eligibleByParadigm[paradigm]);
 
       const timestamp = new Date().toISOString();
+      const recordId = randomUUID();
 
       history.sorteios.push({
-        registro_id: randomUUID(),
+        registro_id: recordId,
         turno,
         tipo: participantes.length === 1 ? 'individual' : 'dupla',
         dupla_chave: requestedRas.slice().sort().join('--'),
@@ -250,14 +258,14 @@ module.exports = async function handler(req, res) {
         PATHS.history,
         historyFile.sha,
         history,
-        `test: registrar sorteio ${question.id} para ${requestedRas.join('/')}`
+        `sorteio: registrar ${question.id} para ${requestedRas.join('/')}`
       );
 
       return res.status(200).json({
         ja_existia: false,
         turno,
         participantes,
-        questao: publicQuestion(question)
+        questao: publicQuestion(question, recordId)
       });
     } catch (error) {
       if (error && error.code === 'CONFLICT') {
