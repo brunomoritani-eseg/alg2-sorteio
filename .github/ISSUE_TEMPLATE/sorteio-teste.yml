@@ -1,0 +1,51 @@
+name: Sorteio de teste
+description: Solicite o sorteio da questão da sua dupla no ambiente de testes.
+title: "[SORTEIO-TESTE] "
+labels: ["sorteio-teste"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Algoritmos 2 — Ambiente de testes
+        Preencha os dados da dupla exatamente como serão usados no projeto.
+        **O sorteio é único por dupla.**
+
+  - type: input
+    id: nome1
+    attributes:
+      label: Nome do aluno 1
+      placeholder: Nome completo
+    validations:
+      required: true
+
+  - type: input
+    id: ra1
+    attributes:
+      label: RA do aluno 1
+      placeholder: Ex.: 123456
+    validations:
+      required: true
+
+  - type: input
+    id: nome2
+    attributes:
+      label: Nome do aluno 2
+      placeholder: Nome completo
+    validations:
+      required: true
+
+  - type: input
+    id: ra2
+    attributes:
+      label: RA do aluno 2
+      placeholder: Ex.: 654321
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmacao
+    attributes:
+      label: Confirmação
+      options:
+        - label: Confirmo que esta é a dupla correta e entendo que não poderei sortear novamente.
+          required: true
