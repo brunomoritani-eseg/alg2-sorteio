@@ -88,3 +88,84 @@ ol { padding-left: 22px; line-height: 1.8; }
   .grid { grid-template-columns: 1fr; }
   .container { padding: 32px 0; }
 }
+
+.admin-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+.secondary-button {
+  border: 1px solid #ccd3df;
+  background: #fff;
+  color: #172033;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.secondary-button:hover { background: #f8fafc; }
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.count-badge, .paradigm-badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.count-badge { background: #eef2f7; color: #475467; }
+.paradigm-badge { background: #eef4ff; color: #3538cd; margin-left: 8px; }
+.draw-item {
+  border-top: 1px solid #e7ebf0;
+  padding: 22px 0;
+}
+.draw-item:first-child { border-top: 0; padding-top: 0; }
+.draw-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+.draw-type {
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: #667085;
+  margin-bottom: 6px;
+}
+.draw-students { line-height: 1.5; }
+.draw-date { color: #667085; font-size: 14px; white-space: nowrap; }
+.draw-question {
+  margin: 16px 0;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+}
+.draw-question-title { line-height: 1.5; }
+.draw-question details { margin-top: 10px; }
+.draw-question summary { cursor: pointer; font-weight: 700; }
+.draw-question p { white-space: pre-wrap; line-height: 1.6; }
+.danger-button {
+  border: 1px solid #f7b4ad;
+  background: #fff;
+  color: #b42318;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.danger-button:hover:not(:disabled) { background: #fff4f2; }
+.danger-button:disabled { opacity: .55; cursor: wait; }
+.empty-state { color: #667085; }
+@media (max-width: 650px) {
+  .draw-top { flex-direction: column; }
+  .draw-date { white-space: normal; }
+}
