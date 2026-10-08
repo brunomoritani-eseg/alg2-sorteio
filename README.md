@@ -1,42 +1,40 @@
 # Alg2 Sorteio
 
-Ambiente de testes do sorteador do projeto de Algoritmos 2.
+Sistema de sorteio do projeto de Algoritmos 2.
 
-O repositório público contém a interface dos alunos e o mecanismo de solicitação. O banco reservado, o mapeamento **questão → paradigma**, a distribuição e o histórico oficial ficam no repositório privado `alg2-sorteio-admin`.
+## Arquitetura
 
-## Teste atual
+- **GitHub**: código-fonte e armazenamento dos dados.
+- **Vercel**: hospeda a interface e a função serverless `/api/sortear`.
+- **alg2-sorteio-admin**: repositório privado contendo banco de questões, gabarito e histórico.
 
-Há cinco questões de teste, uma por paradigma. A dupla abre uma solicitação usando o formulário do GitHub. Um workflow serializa os sorteios, impede um segundo sorteio da mesma dupla, escolhe uma categoria ainda disponível de forma balanceada e registra o resultado no repositório privado.
+A interface nunca recebe o paradigma esperado. A função serverless consulta o repositório privado, registra o sorteio e devolve apenas o enunciado.
 
-## Configuração necessária uma única vez
+## Trabalho individual ou em dupla
 
-O workflow precisa acessar o repositório privado.
+O aluno 1 é obrigatório. O aluno 2 é opcional.
 
-1. Crie um **fine-grained Personal Access Token** para a conta `brunomoritani-eseg`.
-2. Dê acesso somente ao repositório `alg2-sorteio-admin`.
-3. Em **Repository permissions**, conceda **Contents: Read and write**.
-4. No repositório público, abra **Settings → Secrets and variables → Actions**.
-5. Crie o secret `ADMIN_REPO_TOKEN` com esse token.
+Se o aluno 2 estiver vazio, o sorteio é registrado como **individual**. Se houver dois alunos, nome e RA dos dois precisam estar preenchidos.
 
-Sem esse secret, a interface existe, mas o workflow não consegue ler ou gravar o repositório privado.
+Um RA só pode participar de um sorteio. Isso impede que alguém sorteie individualmente e depois tente realizar novo sorteio em outra dupla.
 
-## Como testar
+## Ambiente atual
 
-1. Abra uma nova issue usando o formulário **Sorteio de teste**.
-2. Informe duas pessoas fictícias.
-3. Envie a solicitação.
-4. O resultado deve aparecer como comentário e a issue será fechada automaticamente.
-5. Confira o novo registro em `sorteios/sorteios-teste.json` no repositório privado.
-6. Repita o teste com os mesmos RAs: o sistema deve devolver a mesma questão e não criar outro registro.
+O sistema está em **modo de testes** com cinco questões, uma por paradigma. Cada questão pode ser usada uma vez.
 
-## GitHub Pages
+## Variáveis de ambiente necessárias na Vercel
 
-O arquivo `index.html` já está pronto. Para publicar a interface, habilite o Pages em:
+- `GITHUB_ADMIN_TOKEN`: fine-grained token com **Contents: Read and write** somente em `alg2-sorteio-admin`.
+- `ADMIN_REPO`: opcional; padrão `brunomoritani-eseg/alg2-sorteio-admin`.
+- `ADMIN_BRANCH`: opcional; padrão `main`.
 
-**Settings → Pages → Deploy from a branch → main → / (root)**
+## Teste esperado
 
-Depois disso, a interface ficará disponível no endereço de GitHub Pages do repositório.
+1. Acesse a URL da Vercel.
+2. Preencha apenas o aluno 1 para testar sorteio individual.
+3. Faça outro teste preenchendo aluno 1 e aluno 2.
+4. Repita com um RA já utilizado: o sistema deve bloquear novo sorteio.
+5. Repita exatamente o mesmo participante ou dupla: o sistema devolve a questão original.
+6. Confira o histórico em `sorteios/sorteios-teste.json` no repositório privado.
 
-## Segurança do desenho
-
-O repositório público não contém o gabarito nem o paradigma esperado para cada questão. O workflow lê essas informações somente do repositório privado e publica ao aluno apenas o enunciado sorteado.
+O fluxo antigo baseado em GitHub Issues foi removido.
