@@ -1,0 +1,201 @@
+name: Processar sorteio de teste
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: alg2-sorteio-teste
+  cancel-in-progress: false
+
+jobs:
+  sortear:
+    if: contains(github.event.issue.labels.*.name, 'sorteio-teste')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Obter repositório privado
+        uses: actions/checkout@v4
+        with:
+          repository: brunomoritani-eseg/alg2-sorteio-admin
+          token: ${{ secrets.ADMIN_REPO_TOKEN }}
+          path: admin
+          fetch-depth: 0
+
+      - name: Processar sorteio
+        id: draw
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REQUESTED_BY: ${{ github.actor }}
+        run: |
+          python3 - <<'PY'
+          import json, os, random, re, unicodedata
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          body = os.environ["ISSUE_BODY"]
+          issue_number = int(os.environ["ISSUE_NUMBER"])
+          actor = os.environ["REQUESTED_BY"]
+
+          base = Path("admin")
+          q_path = base / "banco" / "questoes-teste.json"
+          k_path = base / "professor" / "gabarito-teste.json"
+          c_path = base / "configuracao" / "distribuicao-teste.json"
+          h_path = base / "sorteios" / "sorteios-teste.json"
+
+          def field(label):
+              pattern = rf"### {re.escape(label)}\s*\n\s*(.+?)(?=\n\s*### |\Z)"
+              m = re.search(pattern, body, flags=re.S)
+              if not m:
+                  return ""
+              value = m.group(1).strip()
+              return "" if value == "_No response_" else value.splitlines()[0].strip()
+
+          nome1 = field("Nome do aluno 1")
+          ra1 = field("RA do aluno 1")
+          nome2 = field("Nome do aluno 2")
+          ra2 = field("RA do aluno 2")
+
+          def normalize_ra(v):
+              return re.sub(r"[^0-9A-Za-z]", "", v).upper()
+
+          nra1, nra2 = normalize_ra(ra1), normalize_ra(ra2)
+
+          result = Path("resultado.md")
+          should_commit = Path("should_commit.txt")
+
+          if not all([nome1, nra1, nome2, nra2]):
+              result.write_text(
+                  "## Não foi possível realizar o sorteio\n\n"
+                  "Os dados da dupla não puderam ser lidos. Feche esta solicitação e abra outra "
+                  "preenchendo os quatro campos obrigatórios.\n",
+                  encoding="utf-8"
+              )
+              should_commit.write_text("false")
+              raise SystemExit(0)
+
+          pair_key = "--".join(sorted([nra1, nra2]))
+
+          questions_data = json.loads(q_path.read_text(encoding="utf-8"))
+          key_data = json.loads(k_path.read_text(encoding="utf-8"))
+          config = json.loads(c_path.read_text(encoding="utf-8"))
+          history = json.loads(h_path.read_text(encoding="utf-8"))
+
+          previous = next((x for x in history["sorteios"] if x["dupla_chave"] == pair_key), None)
+          question_by_id = {q["id"]: q for q in questions_data["questoes"]}
+
+          if previous:
+              q = question_by_id[previous["questao"]]
+              result.write_text(
+                  f"## Esta dupla já realizou o sorteio\n\n"
+                  f"**Questão:** {q['id']} — {q['titulo']}\n\n"
+                  f"{q['enunciado']}\n\n"
+                  f"> Registro original: solicitação #{previous['issue']} em {previous['data']}.\n",
+                  encoding="utf-8"
+              )
+              should_commit.write_text("false")
+              raise SystemExit(0)
+
+          paradigm_of = {
+              qid: info["paradigma"]
+              for qid, info in key_data["questoes"].items()
+          }
+
+          counts = {p: 0 for p in config["max_por_paradigma"]}
+          used_questions = set()
+
+          for draw in history["sorteios"]:
+              counts[draw["paradigma"]] = counts.get(draw["paradigma"], 0) + 1
+              used_questions.add(draw["questao"])
+
+          eligible_paradigms = [
+              p for p, maximum in config["max_por_paradigma"].items()
+              if counts.get(p, 0) < maximum
+          ]
+
+          if not eligible_paradigms:
+              result.write_text(
+                  "## Ambiente de testes esgotado\n\n"
+                  "Todas as vagas de sorteio previstas para o teste já foram utilizadas. "
+                  "Avise o professor para reinicializar o ambiente.\n",
+                  encoding="utf-8"
+              )
+              should_commit.write_text("false")
+              raise SystemExit(0)
+
+          minimum = min(counts[p] for p in eligible_paradigms)
+          balanced = [p for p in eligible_paradigms if counts[p] == minimum]
+          paradigm = random.SystemRandom().choice(balanced)
+
+          candidates = [
+              q for q in questions_data["questoes"]
+              if paradigm_of[q["id"]] == paradigm and q["id"] not in used_questions
+          ]
+
+          if not candidates:
+              result.write_text(
+                  "## Não foi possível concluir o sorteio\n\n"
+                  "A categoria selecionada não possui questões de teste disponíveis. "
+                  "Avise o professor.\n",
+                  encoding="utf-8"
+              )
+              should_commit.write_text("false")
+              raise SystemExit(0)
+
+          q = random.SystemRandom().choice(candidates)
+          timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+          history["sorteios"].append({
+              "dupla_chave": pair_key,
+              "alunos": [
+                  {"nome": nome1, "ra": nra1},
+                  {"nome": nome2, "ra": nra2}
+              ],
+              "questao": q["id"],
+              "paradigma": paradigm,
+              "data": timestamp,
+              "issue": issue_number,
+              "solicitado_por": actor
+          })
+
+          h_path.write_text(json.dumps(history, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          should_commit.write_text("true")
+
+          result.write_text(
+              "## Sorteio realizado ✅\n\n"
+              f"**Dupla:** {nome1} ({nra1}) / {nome2} ({nra2})\n\n"
+              f"### {q['id']} — {q['titulo']}\n\n"
+              f"{q['enunciado']}\n\n"
+              "---\n"
+              "**Importante:** o enunciado não informa qual paradigma deve ser utilizado. "
+              "A escolha e a justificativa da estratégia fazem parte da avaliação.\n",
+              encoding="utf-8"
+          )
+          PY
+
+      - name: Registrar sorteio no repositório privado
+        if: hashFiles('should_commit.txt') != '' && steps.draw.outcome == 'success'
+        working-directory: admin
+        run: |
+          if [ "$(cat ../should_commit.txt)" != "true" ]; then
+            exit 0
+          fi
+
+          git config user.name "alg2-sorteio-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add sorteios/sorteios-teste.json
+          git commit -m "test: registrar sorteio da issue #${{ github.event.issue.number }}"
+          git push
+
+      - name: Publicar resultado
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment "${{ github.event.issue.number }}"             --repo "${{ github.repository }}"             --body-file resultado.md
+
+          gh issue close "${{ github.event.issue.number }}"             --repo "${{ github.repository }}"
