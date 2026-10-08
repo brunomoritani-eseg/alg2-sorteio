@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/sortear.js": {
+      "memory": 128,
+      "maxDuration": 10
+    }
+  }
+}
