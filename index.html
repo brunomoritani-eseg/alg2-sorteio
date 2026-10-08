@@ -20,6 +20,18 @@
 
       <form id="draw-form">
         <div class="student-block">
+          <h3>Turma <span class="required">obrigatório</span></h3>
+          <label>
+            <span>Turno de Algoritmos 2</span>
+            <select id="turno" required>
+              <option value="">Selecione o turno</option>
+              <option value="DIURNO">Algoritmos 2 — Diurno</option>
+              <option value="NOTURNO">Algoritmos 2 — Noturno</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="student-block">
           <h3>Aluno 1 <span class="required">obrigatório</span></h3>
           <div class="grid">
             <label><span>Nome</span><input id="nome1" maxlength="100" required placeholder="Nome completo"></label>
@@ -45,6 +57,7 @@
     <section id="result-card" class="card result-card" hidden>
       <span class="success-badge">SORTEIO CONCLUÍDO</span>
       <h2 id="result-title"></h2>
+      <p id="result-turno" class="result-participants"></p>
       <p id="result-participants" class="result-participants"></p>
       <div id="result-text" class="question-text"></div>
       <p id="repeat-note" class="small" hidden>Este sorteio já havia sido realizado anteriormente. A questão original foi mantida.</p>
@@ -53,6 +66,7 @@
     <section class="card secondary">
       <h2>Como funciona</h2>
       <ol>
+        <li>Selecione se a turma é <strong>Algoritmos 2 — Diurno</strong> ou <strong>Algoritmos 2 — Noturno</strong>.</li>
         <li>Informe o aluno 1 e, se houver dupla, também o aluno 2.</li>
         <li>Clique em <strong>Sortear minha questão</strong>.</li>
         <li>O sistema verifica se algum RA já participou de outro sorteio.</li>
@@ -68,6 +82,7 @@
     const error = document.getElementById('form-error');
     const resultCard = document.getElementById('result-card');
     const resultTitle = document.getElementById('result-title');
+    const resultTurno = document.getElementById('result-turno');
     const resultParticipants = document.getElementById('result-participants');
     const resultText = document.getElementById('result-text');
     const repeatNote = document.getElementById('repeat-note');
@@ -86,11 +101,13 @@
       error.hidden = true;
       resultCard.hidden = true;
 
+      const turno = document.getElementById('turno').value;
       const nome1 = clean(document.getElementById('nome1').value);
       const ra1 = cleanRa(document.getElementById('ra1').value);
       const nome2 = clean(document.getElementById('nome2').value);
       const ra2 = cleanRa(document.getElementById('ra2').value);
 
+      if (!turno) return showError('Selecione o turno de Algoritmos 2.');
       if (!nome1 || !ra1) return showError('Preencha nome e RA do aluno 1.');
       if ((nome2 && !ra2) || (!nome2 && ra2)) return showError('Para usar o aluno 2, preencha nome e RA. Se for individual, deixe os dois campos vazios.');
       if (ra2 && ra1 === ra2) return showError('Os dois integrantes precisam ter RAs diferentes.');
@@ -102,12 +119,13 @@
         const response = await fetch('/api/sortear', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome1, ra1, nome2, ra2 })
+          body: JSON.stringify({ turno, nome1, ra1, nome2, ra2 })
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Não foi possível realizar o sorteio.');
 
         resultTitle.textContent = data.questao.id + ' — ' + data.questao.titulo;
+        resultTurno.textContent = data.turno === 'NOTURNO' ? 'Algoritmos 2 — Noturno' : 'Algoritmos 2 — Diurno';
         resultParticipants.textContent = data.participantes.map(p => p.nome + ' (' + p.ra + ')').join(' / ');
         resultText.textContent = data.questao.enunciado;
         repeatNote.hidden = !data.ja_existia;
