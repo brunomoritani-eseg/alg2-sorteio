@@ -30,3 +30,38 @@ ol { padding-left: 22px; line-height: 1.8; }
 .button:hover { opacity: .9; }
 .secondary { background: #fbfcfe; }
 .small { color: #667085; font-size: 14px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+label span {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #ccd3df;
+  border-radius: 10px;
+  font: inherit;
+  background: white;
+}
+input:focus {
+  outline: 3px solid rgba(23,32,51,.10);
+  border-color: #172033;
+}
+button.button {
+  border: 0;
+  cursor: pointer;
+}
+.error {
+  margin-top: 14px;
+  color: #b42318;
+  font-weight: 700;
+}
+@media (max-width: 650px) {
+  .grid { grid-template-columns: 1fr; }
+}
