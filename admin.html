@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Algoritmos 2 — Administração dos Sorteios</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <span class="badge">ÁREA DO PROFESSOR</span>
+      <h1>Administração<br>dos Sorteios</h1>
+      <p>Consulte os sorteios por RA e cancele um registro quando uma dupla deixar de existir.</p>
+    </section>
+
+    <section class="card">
+      <h2>Acesso administrativo</h2>
+      <div class="grid">
+        <label>
+          <span>Senha</span>
+          <input id="password" type="password" autocomplete="current-password" placeholder="Senha administrativa">
+        </label>
+        <label>
+          <span>Buscar por RA</span>
+          <input id="ra-search" placeholder="Vazio = mostrar todos">
+        </label>
+      </div>
+      <div class="admin-actions">
+        <button class="button" id="load-button" type="button">Carregar sorteios</button>
+        <button class="secondary-button" id="clear-button" type="button">Limpar busca</button>
+      </div>
+      <p id="admin-error" class="error" hidden></p>
+    </section>
+
+    <section class="card" id="results-card" hidden>
+      <div class="results-header">
+        <h2>Sorteios encontrados</h2>
+        <span id="total-count" class="count-badge"></span>
+      </div>
+      <div id="results"></div>
+    </section>
+  </main>
+
+  <script>
+    const passwordInput = document.getElementById('password');
+    const raSearch = document.getElementById('ra-search');
+    const loadButton = document.getElementById('load-button');
+    const clearButton = document.getElementById('clear-button');
+    const errorBox = document.getElementById('admin-error');
+    const resultsCard = document.getElementById('results-card');
+    const results = document.getElementById('results');
+    const totalCount = document.getElementById('total-count');
+
+    const saved = sessionStorage.getItem('alg2-admin-password');
+    if (saved) passwordInput.value = saved;
+
+    function cleanRa(value) {
+      return value.trim().replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+    }
+
+    function setError(message) {
+      errorBox.textContent = message;
+      errorBox.hidden = false;
+    }
+
+    function clearError() {
+      errorBox.hidden = true;
+      errorBox.textContent = '';
+    }
+
+    function setLoading(loading) {
+      loadButton.disabled = loading;
+      loadButton.textContent = loading ? 'Carregando...' : 'Carregar sorteios';
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function formatDate(value) {
+      if (!value) return 'Data não registrada';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return new Intl.DateTimeFormat('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'short'
+      }).format(date);
+    }
+
+    async function callAdmin(payload) {
+      const password = passwordInput.value;
+      if (!password) throw new Error('Informe a senha administrativa.');
+
+      const response = await fetch('/api/admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': password
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Falha ao acessar o painel.');
+      sessionStorage.setItem('alg2-admin-password', password);
+      return data;
+    }
+
+    function renderDraw(draw) {
+      const alunos = (draw.alunos || [])
+        .map(a => '<strong>' + escapeHtml(a.nome) + '</strong> (' + escapeHtml(a.ra) + ')')
+        .join(' / ');
+
+      const q = draw.questao || {};
+      const paradigma = draw.paradigma
+        ? '<span class="paradigm-badge">' + escapeHtml(draw.paradigma) + '</span>'
+        : '';
+
+      return '<article class="draw-item" data-key="' + escapeHtml(draw.record_key) + '">' +
+        '<div class="draw-top">' +
+          '<div>' +
+            '<div class="draw-type">' + escapeHtml(draw.tipo || 'sorteio') + '</div>' +
+            '<div class="draw-students">' + alunos + '</div>' +
+          '</div>' +
+          '<div class="draw-date">' + escapeHtml(formatDate(draw.data)) + '</div>' +
+        '</div>' +
+        '<div class="draw-question">' +
+          '<div class="draw-question-title"><strong>' + escapeHtml(q.id || '') + ' — ' + escapeHtml(q.titulo || '') + '</strong> ' + paradigma + '</div>' +
+          '<details><summary>Ver enunciado</summary><p>' + escapeHtml(q.enunciado || '') + '</p></details>' +
+        '</div>' +
+        '<button class="danger-button" type="button" data-delete="' + escapeHtml(draw.record_key) + '">Cancelar sorteio</button>' +
+      '</article>';
+    }
+
+    async function loadDraws() {
+      clearError();
+      setLoading(true);
+      try {
+        const data = await callAdmin({
+          action: 'list',
+          ra: cleanRa(raSearch.value)
+        });
+
+        totalCount.textContent = data.total + (data.total === 1 ? ' registro' : ' registros');
+        results.innerHTML = data.sorteios.length
+          ? data.sorteios.map(renderDraw).join('')
+          : '<p class="empty-state">Nenhum sorteio encontrado.</p>';
+        resultsCard.hidden = false;
+      } catch (err) {
+        setError(err.message || 'Erro ao carregar sorteios.');
+        resultsCard.hidden = true;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadButton.addEventListener('click', loadDraws);
+
+    clearButton.addEventListener('click', () => {
+      raSearch.value = '';
+      loadDraws();
+    });
+
+    raSearch.addEventListener('keydown', event => {
+      if (event.key === 'Enter') loadDraws();
+    });
+
+    results.addEventListener('click', async event => {
+      const button = event.target.closest('[data-delete]');
+      if (!button) return;
+
+      const recordKey = button.getAttribute('data-delete');
+      const item = button.closest('.draw-item');
+      const studentText = item ? item.querySelector('.draw-students')?.textContent : '';
+
+      if (!window.confirm(
+        'Cancelar este sorteio?\n\n' +
+        (studentText || '') +
+        '\n\nOs RAs ficarão livres para realizar um novo sorteio.'
+      )) return;
+
+      clearError();
+      button.disabled = true;
+      button.textContent = 'Cancelando...';
+
+      try {
+        await callAdmin({ action: 'delete', record_key: recordKey });
+        await loadDraws();
+      } catch (err) {
+        setError(err.message || 'Erro ao cancelar sorteio.');
+        button.disabled = false;
+        button.textContent = 'Cancelar sorteio';
+      }
+    });
+  </script>
+</body>
+</html>
