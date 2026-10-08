@@ -38,3 +38,19 @@ O sistema está em **modo de testes** com cinco questões, uma por paradigma. Ca
 6. Confira o histórico em `sorteios/sorteios-teste.json` no repositório privado.
 
 O fluxo antigo baseado em GitHub Issues foi removido.
+
+
+## Painel administrativo
+
+A página `/admin.html` permite ao professor:
+
+- listar todos os sorteios;
+- buscar um sorteio por RA;
+- ver participantes, questão, paradigma e enunciado;
+- cancelar um sorteio, liberando os RAs para um novo sorteio.
+
+O painel é protegido pela variável de ambiente `ADMIN_PANEL_PASSWORD`.
+
+## Auditoria do enunciado
+
+Novos sorteios armazenam também um snapshot da questão no histórico, preservando o título e o enunciado exatamente como foram entregues ao aluno naquele momento.
