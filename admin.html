@@ -121,11 +121,16 @@
       const paradigma = draw.paradigma
         ? '<span class="paradigm-badge">' + escapeHtml(draw.paradigma) + '</span>'
         : '';
+      const turno = draw.turno === 'NOTURNO'
+        ? 'Algoritmos 2 — Noturno'
+        : draw.turno === 'DIURNO'
+          ? 'Algoritmos 2 — Diurno'
+          : 'Turno não informado';
 
       return '<article class="draw-item" data-key="' + escapeHtml(draw.record_key) + '">' +
         '<div class="draw-top">' +
           '<div>' +
-            '<div class="draw-type">' + escapeHtml(draw.tipo || 'sorteio') + '</div>' +
+            '<div class="draw-type">' + escapeHtml(draw.tipo || 'sorteio') + ' · ' + escapeHtml(turno) + '</div>' +
             '<div class="draw-students">' + alunos + '</div>' +
           '</div>' +
           '<div class="draw-date">' + escapeHtml(formatDate(draw.data)) + '</div>' +
