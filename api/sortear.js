@@ -1,4 +1,4 @@
-const { randomInt } = require('crypto');
+const { randomInt, randomUUID } = require('crypto');
 
 const ADMIN_REPO = process.env.ADMIN_REPO || 'brunomoritani-eseg/alg2-sorteio-admin';
 const ADMIN_BRANCH = process.env.ADMIN_BRANCH || 'main';
@@ -223,10 +223,16 @@ module.exports = async function handler(req, res) {
       const timestamp = new Date().toISOString();
 
       history.sorteios.push({
+        registro_id: randomUUID(),
         tipo: participantes.length === 1 ? 'individual' : 'dupla',
         dupla_chave: requestedRas.slice().sort().join('--'),
         alunos: participantes,
         questao: question.id,
+        questao_snapshot: {
+          id: question.id,
+          titulo: question.titulo,
+          enunciado: question.enunciado
+        },
         paradigma: paradigm,
         data: timestamp,
         origem: 'vercel-api'
